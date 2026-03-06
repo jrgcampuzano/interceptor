@@ -1,0 +1,7 @@
+.env
+SILENCE_STATUS.txt
+blocked_ips.json
+interceptor.log
+GeoLite2-City.mmdb
+__pycache__/
+*.pyc
