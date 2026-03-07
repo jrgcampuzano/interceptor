@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>INTERCEPTOR</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Outfit:wght@300;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0e1a; --surface: #111827; --surface2: #1e293b;
+  --border: #1e3a5f; --text: #e2e8f0; --text2: #94a3b8;
+  --accent: #3b82f6; --green: #22c55e; --amber: #f59e0b;
+  --red: #ef4444; --radius: 12px;
+  --mono: 'JetBrains Mono', monospace; --sans: 'Outfit', sans-serif;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bg); color:var(--text); font-family:var(--sans); min-height:100vh; }
+
+/* Login */
+#login-screen { display:flex; align-items:center; justify-content:center; min-height:100vh; padding:20px; }
+.login-box { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:40px; width:100%; max-width:380px; text-align:center; }
+.login-box h1 { font-size:28px; font-weight:700; margin-bottom:6px; background:linear-gradient(135deg, var(--red), var(--amber)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; letter-spacing:2px; }
+.login-box p { color:var(--text2); font-size:14px; margin-bottom:28px; }
+.login-box input { display:block; width:100%; padding:12px 16px; margin-bottom:12px; background:var(--bg); border:1px solid var(--border); border-radius:8px; color:var(--text); font-family:var(--mono); font-size:14px; outline:none; }
+.login-box input:focus { border-color:var(--accent); }
+#login-error { color:var(--red); font-size:13px; margin-top:10px; display:none; }
+
+/* Dashboard */
+#dashboard { display:none; padding:20px; max-width:1100px; margin:0 auto; }
+header { display:flex; justify-content:space-between; align-items:center; margin-bottom:28px; padding-bottom:16px; border-bottom:1px solid var(--border); }
+header h1 { font-size:22px; font-weight:700; background:linear-gradient(135deg, var(--red), var(--amber)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; letter-spacing:2px; }
+.header-meta { display:flex; align-items:center; gap:16px; }
+#server-time { font-family:var(--mono); font-size:13px; color:var(--text2); }
+#btn-logout { background:none; border:1px solid var(--border); color:var(--text2); padding:6px 14px; border-radius:6px; cursor:pointer; font-size:12px; font-family:var(--sans); }
+#btn-logout:hover { border-color:var(--red); color:var(--red); }
+
+/* Cards */
+.cards { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:14px; margin-bottom:28px; }
+.card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:18px 20px; position:relative; overflow:hidden; }
+.card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; }
+.card.green::before { background:var(--green); }
+.card.amber::before { background:var(--amber); }
+.card.red::before { background:var(--red); }
+.card.blue::before { background:var(--accent); }
+.card-label { font-size:11px; text-transform:uppercase; letter-spacing:1.5px; color:var(--text2); margin-bottom:6px; }
+.card-value { font-size:22px; font-weight:700; font-family:var(--mono); }
+.card-sub { font-size:12px; color:var(--text2); margin-top:4px; }
+
+/* Sections */
+.section { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:24px; margin-bottom:24px; }
+.section-title { font-size:15px; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:var(--text2); margin-bottom:18px; display:flex; align-items:center; gap:8px; }
+.section-title .dot { width:8px; height:8px; border-radius:50%; display:inline-block; }
+
+/* Controls */
+.controls { display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+.controls select, .controls input { background:var(--bg); border:1px solid var(--border); border-radius:8px; color:var(--text); padding:10px 14px; font-family:var(--mono); font-size:14px; outline:none; }
+
+/* Buttons */
+.btn { padding:10px 22px; border:none; border-radius:8px; font-family:var(--sans); font-size:14px; font-weight:600; cursor:pointer; transition:all 0.2s; display:inline-flex; align-items:center; gap:6px; }
+.btn:active { transform:scale(0.97); }
+.btn-pause { background:var(--amber); color:#000; }
+.btn-resume { background:var(--green); color:#000; }
+.btn-danger { background:var(--red); color:white; }
+.btn-accent { background:var(--accent); color:white; }
+.btn-ghost { background:transparent; border:1px solid var(--border); color:var(--text2); }
+.btn-ghost:hover { border-color:var(--text); color:var(--text); }
+.btn-sm { padding:6px 12px; font-size:12px; border-radius:6px; }
+
+/* IP Table */
+.ip-table { width:100%; border-collapse:collapse; font-family:var(--mono); font-size:13px; }
+.ip-table th { text-align:left; padding:10px 12px; color:var(--text2); font-size:11px; text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid var(--border); }
+.ip-table td { padding:10px 12px; border-bottom:1px solid var(--border); }
+.ip-table tr:last-child td { border-bottom:none; }
+.ip-table .ip-addr { color:var(--accent); font-weight:700; }
+.badge { display:inline-block; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:700; }
+.badge-red { background:rgba(239,68,68,0.15); color:var(--red); }
+.badge-green { background:rgba(34,197,94,0.15); color:var(--green); }
+
+/* Toast */
+.toast { position:fixed; bottom:24px; right:24px; padding:14px 22px; background:var(--surface); border:1px solid var(--border); border-radius:10px; font-size:14px; color:var(--text); transform:translateY(100px); opacity:0; transition:all 0.3s; z-index:999; font-family:var(--mono); }
+.toast.show { transform:translateY(0); opacity:1; }
+
+#feedback { font-size:13px; color:var(--green); margin-top:10px; font-family:var(--mono); min-height:20px; }
+.spinner { display:inline-block; width:14px; height:14px; border:2px solid var(--text2); border-top-color:transparent; border-radius:50%; animation:spin 0.8s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+
+@media (max-width:600px) {
+  .cards { grid-template-columns:1fr 1fr; }
+  header { flex-direction:column; gap:10px; align-items:flex-start; }
+  .controls { flex-direction:column; }
+  .controls .btn { width:100%; justify-content:center; }
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <h1>INTERCEPTOR</h1>
+    <p>Monitor CCTV — Panel de Control</p>
+    <input id="inp-user" type="text" placeholder="Usuario" value="admin">
+    <input id="inp-pass" type="password" placeholder="Contraseña" autofocus>
+    <button class="btn btn-accent" style="width:100%" onclick="doLogin()">Iniciar sesión</button>
+    <div id="login-error"></div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+  <header>
+    <h1>🛡️ INTERCEPTOR</h1>
+    <div class="header-meta">
+      <span id="server-time"></span>
+      <button id="btn-logout" onclick="doLogout()">Cerrar sesión</button>
+    </div>
+  </header>
+
+  <!-- Status Cards -->
+  <div class="cards">
+    <div class="card" id="card-status">
+      <div class="card-label">Estado</div>
+      <div class="card-value" id="val-status">—</div>
+      <div class="card-sub" id="sub-status"></div>
+    </div>
+    <div class="card" id="card-blocked">
+      <div class="card-label">IPs Bloqueadas</div>
+      <div class="card-value" id="val-blocked">—</div>
+      <div class="card-sub" id="sub-blocked"></div>
+    </div>
+    <div class="card" id="card-allowed">
+      <div class="card-label">IPs Permitidas</div>
+      <div class="card-value" id="val-allowed">—</div>
+      <div class="card-sub" id="sub-allowed"></div>
+    </div>
+    <div class="card" id="card-cctv">
+      <div class="card-label">CCTV</div>
+      <div class="card-value" id="val-cctv">—</div>
+      <div class="card-sub" id="sub-cctv"></div>
+    </div>
+  </div>
+
+  <!-- Silence Controls -->
+  <div class="section">
+    <div class="section-title"><span class="dot" style="background:var(--amber)"></span> Control de Silencio</div>
+    <div class="controls">
+      <select id="silence-minutes">
+        <option value="15" selected>15 minutos</option>
+        <option value="30">30 minutos</option>
+        <option value="60">1 hora</option>
+        <option value="120">2 horas</option>
+      </select>
+      <button class="btn btn-pause" onclick="doSilence()">🔇 Silenciar</button>
+      <button class="btn btn-resume" onclick="doResume()">▶ Reanudar</button>
+    </div>
+    <div id="feedback"></div>
+  </div>
+
+  <!-- Blocked IPs -->
+  <div class="section">
+    <div class="section-title">
+      <span class="dot" style="background:var(--red)"></span> IPs Bloqueadas
+      <span style="flex:1"></span>
+      <button class="btn btn-ghost btn-sm" onclick="loadStatus()">↻ Actualizar</button>
+    </div>
+    <div id="blocked-table"></div>
+  </div>
+
+  <!-- Allowed IPs -->
+  <div class="section">
+    <div class="section-title">
+      <span class="dot" style="background:var(--green)"></span> IPs Permitidas
+    </div>
+    <div id="allowed-table"></div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+const API = window.location.origin;
+let TOKEN = localStorage.getItem('interceptor_token') || '';
+let refreshTimer = null;
+
+// ── Auth ──
+async function doLogin() {
+  const user = document.getElementById('inp-user').value;
+  const pass = document.getElementById('inp-pass').value;
+  const err = document.getElementById('login-error');
+  err.style.display = 'none';
+  try {
+    const r = await fetch(`${API}/api/login`, {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({username: user, password: pass})
+    });
+    const d = await r.json();
+    if (r.ok) { TOKEN = d.token; localStorage.setItem('interceptor_token', TOKEN); showDashboard(); }
+    else { err.textContent = d.error || 'Error'; err.style.display = 'block'; }
+  } catch(e) { err.textContent = 'Error de conexión'; err.style.display = 'block'; }
+}
+
+function doLogout() {
+  TOKEN = ''; localStorage.removeItem('interceptor_token');
+  clearInterval(refreshTimer);
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+}
+
+async function api(path, opts = {}) {
+  const r = await fetch(`${API}${path}`, {
+    ...opts, headers: {'Authorization': `Bearer ${TOKEN}`, 'Content-Type': 'application/json', ...(opts.headers||{})}
+  });
+  if (r.status === 401) { doLogout(); throw new Error('Token expirado'); }
+  return r.json();
+}
+
+// ── Dashboard ──
+function showDashboard() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  loadStatus();
+  refreshTimer = setInterval(loadStatus, 10000);
+}
+
+async function loadStatus() {
+  try {
+    const s = await api('/api/status');
+
+    // Status card
+    const sc = document.getElementById('card-status');
+    sc.className = 'card ' + (s.status === 'running' ? 'green' : 'amber');
+    const vs = document.getElementById('val-status');
+    vs.textContent = s.status === 'running' ? 'ACTIVO' : 'SILENCIADO';
+    vs.style.color = s.status === 'running' ? 'var(--green)' : 'var(--amber)';
+    document.getElementById('sub-status').textContent = s.silenced ? `Hasta ${s.silence_until}` : `TTL: ${s.block_ttl_hours}h`;
+
+    // Blocked
+    const bc = document.getElementById('card-blocked');
+    bc.className = 'card ' + (s.blocked_ips > 0 ? 'red' : 'green');
+    document.getElementById('val-blocked').textContent = s.blocked_ips;
+    document.getElementById('val-blocked').style.color = s.blocked_ips > 0 ? 'var(--red)' : 'var(--green)';
+    document.getElementById('sub-blocked').textContent = s.blocked_ips > 0 ? 'En firewall' : 'Sin bloqueos';
+
+    // Allowed
+    const ac = document.getElementById('card-allowed');
+    ac.className = 'card ' + (s.allowed_ips.length > 0 ? 'green' : 'blue');
+    document.getElementById('val-allowed').textContent = s.allowed_ips.length;
+    document.getElementById('sub-allowed').textContent = s.allowed_ips.length > 0 ? s.allowed_ips.join(', ') : 'Ninguna';
+
+    // CCTV
+    document.getElementById('card-cctv').className = 'card blue';
+    document.getElementById('val-cctv').textContent = s.cctv_ip;
+    document.getElementById('sub-cctv').textContent = 'Protegido';
+
+    // Time
+    document.getElementById('server-time').textContent = s.server_time;
+
+    // Tables
+    renderBlockedTable(s.blocked_list);
+    renderAllowedTable(s.allowed_ips);
+  } catch(e) { console.error('Status error:', e); }
+}
+
+function renderBlockedTable(blocked) {
+  const el = document.getElementById('blocked-table');
+  const ips = Object.entries(blocked);
+  if (ips.length === 0) { el.innerHTML = '<p style="color:var(--text2)">Sin IPs bloqueadas</p>'; return; }
+  el.innerHTML = `<table class="ip-table"><thead><tr><th>IP</th><th>Bloqueada</th><th>Restante</th><th>Acción</th></tr></thead><tbody>${
+    ips.map(([ip, d]) => `<tr>
+      <td class="ip-addr">${ip}</td>
+      <td>${d.blocked_at.slice(0,19).replace('T',' ')}</td>
+      <td><span class="badge badge-red">${d.time_remaining}</span></td>
+      <td>
+        <button class="btn btn-ghost btn-sm" onclick="doUnblock('${ip}')">🔓 Desbloquear</button>
+        <button class="btn btn-ghost btn-sm" onclick="doAllow('${ip}')" style="border-color:var(--green);color:var(--green);">✅ Permitir</button>
+      </td>
+    </tr>`).join('')
+  }</tbody></table>`;
+}
+
+function renderAllowedTable(allowed) {
+  const el = document.getElementById('allowed-table');
+  if (allowed.length === 0) { el.innerHTML = '<p style="color:var(--text2)">Sin IPs permitidas</p>'; return; }
+  el.innerHTML = `<table class="ip-table"><thead><tr><th>IP</th><th>Acción</th></tr></thead><tbody>${
+    allowed.map(ip => `<tr>
+      <td class="ip-addr">${ip}</td>
+      <td><button class="btn btn-ghost btn-sm" onclick="doDisallow('${ip}')" style="border-color:var(--red);color:var(--red);">✗ Revocar</button></td>
+    </tr>`).join('')
+  }</tbody></table>`;
+}
+
+// ── Actions ──
+async function doSilence() {
+  const fb = document.getElementById('feedback');
+  const minutes = parseInt(document.getElementById('silence-minutes').value);
+  fb.innerHTML = '<span class="spinner"></span> Silenciando...';
+  try {
+    const d = await api('/api/silence', {method:'POST', body: JSON.stringify({minutes})});
+    fb.style.color = 'var(--amber)'; fb.textContent = `🔇 Silenciado hasta ${d.until}`;
+    toast(`Silenciado ${minutes} min`); loadStatus();
+  } catch(e) { fb.style.color = 'var(--red)'; fb.textContent = 'Error'; }
+}
+
+async function doResume() {
+  const fb = document.getElementById('feedback');
+  fb.innerHTML = '<span class="spinner"></span> Reanudando...';
+  try {
+    const d = await api('/api/resume', {method:'POST'});
+    fb.style.color = 'var(--green)'; fb.textContent = d.status === 'resumed' ? '▶ Reanudado' : 'Ya activo';
+    toast('Reanudado', 'var(--green)'); loadStatus();
+  } catch(e) { fb.style.color = 'var(--red)'; fb.textContent = 'Error'; }
+}
+
+async function doUnblock(ip) {
+  try {
+    await api(`/api/unblock/${ip}`, {method:'POST'});
+    toast(`${ip} desbloqueada`, 'var(--green)'); loadStatus();
+  } catch(e) { toast('Error', 'var(--red)'); }
+}
+
+async function doAllow(ip) {
+  try {
+    await api(`/api/allow/${ip}`, {method:'POST'});
+    toast(`${ip} permitida`, 'var(--green)'); loadStatus();
+  } catch(e) { toast('Error', 'var(--red)'); }
+}
+
+async function doDisallow(ip) {
+  try {
+    await api(`/api/disallow/${ip}`, {method:'POST'});
+    toast(`${ip} revocada`, 'var(--amber)'); loadStatus();
+  } catch(e) { toast('Error', 'var(--red)'); }
+}
+
+// ── Toast ──
+function toast(msg, color = 'var(--accent)') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.style.borderColor = color;
+  t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ── Enter key login ──
+document.getElementById('inp-pass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+// ── Auto-login ──
+if (TOKEN) {
+  fetch(`${API}/api/status`, {headers:{'Authorization': `Bearer ${TOKEN}`}})
+    .then(r => { if (r.ok) showDashboard(); else doLogout(); })
+    .catch(() => doLogout());
+}
+</script>
+</body>
+</html>

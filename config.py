@@ -50,8 +50,13 @@ CLEANUP_INTERVAL = 300         # Segundos entre revisiones de expiración
 # ==============================================================================
 # AGRUPAMIENTO Y THROTTLING
 # ==============================================================================
-AGGREGATION_TIME = 10          # Segundos para agrupar eventos antes de enviar
+AGGREGATION_TIME = 60          # Segundos para agrupar eventos después del primer envío
 THROTTLE_TIME = 60             # Segundos mínimos entre alertas de la misma IP
+
+# ==============================================================================
+# IPs PERMITIDAS — Silenciadas pero NO bloqueadas (acceso al CCTV permitido)
+# ==============================================================================
+ALLOWED_IPS = set()            # Se llena en runtime vía /allow/<ip>
 
 # ==============================================================================
 # SILENCIO
